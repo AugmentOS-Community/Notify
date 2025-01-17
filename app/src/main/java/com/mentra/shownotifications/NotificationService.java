@@ -5,27 +5,36 @@ import android.os.Looper;
 import android.util.Log;
 
 import com.teamopensmartglasses.augmentoslib.AugmentOSLib;
+import com.teamopensmartglasses.augmentoslib.PhoneNotification;
 import com.teamopensmartglasses.augmentoslib.SmartGlassesAndroidService;
 import com.teamopensmartglasses.augmentoslib.events.NotificationEvent;
-import com.teamopensmartglasses.augmentoslib.events.SpeechRecOutputEvent;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.EventBusException;
 import org.greenrobot.eventbus.Subscribe;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 
 public class NotificationService extends SmartGlassesAndroidService {
     public static final String TAG = "NotificationService";
 
     public AugmentOSLib augmentOSLib;
+    private final JSONArray notificationQueue;
 
     private DisplayQueue displayQueue;
-
+    private static final List<String> notificationAppBlackList = Arrays.asList("youtube", "augment");
+    private final Handler callTimeoutHandler = new Handler(Looper.getMainLooper());
+    private Runnable timeoutRunnable;
     public NotificationService() {
         super();
+        this.notificationQueue = new JSONArray();
     }
 
     @Override
@@ -57,14 +66,14 @@ public class NotificationService extends SmartGlassesAndroidService {
         }
     }
 
-    public void completeInitialization(){
+    public void completeInitialization() {
         Log.d(TAG, "COMPLETE CONVOSCOPE INITIALIZATION");
 
         displayQueue.startQueue();
     }
 
     @Override
-    public void onDestroy(){
+    public void onDestroy() {
         Log.d(TAG, "onDestroy: Called");
         Log.d(TAG, "Deinit augmentOSLib");
         augmentOSLib.deinit();
@@ -77,11 +86,78 @@ public class NotificationService extends SmartGlassesAndroidService {
     }
 
     @Subscribe
-    public void onNotificationEvent(NotificationEvent event) {
-        JSONObject notificationData = event.notificationData;
+    public void onNotificationEvent(NotificationEvent event) throws JSONException {
+        JSONObject notificationData = event.getNotificationData();
         Log.d(TAG, "Received event: " + notificationData.toString());
-//        displayQueue.addTask(new DisplayQueue.Task(() -> augmentOSLib.sendDoubleTextWall(finalLiveCaptionString, ""), true, false, true));
-//        debounceAndShowTranscriptOnGlasses(text, isFinal);
+        addNotificationToQueueAndShowOnGlasses(notificationData);
     }
 
+    private void addNotificationToQueueAndShowOnGlasses(JSONObject notification) {
+        if(notification == null || notificationAppBlackList.contains(notification.optString("appName").toLowerCase())) return;
+
+        addNotification(notification);
+        String notificationString = constructNotificationString();
+
+        callTimeoutHandler.removeCallbacks(timeoutRunnable);
+
+        timeoutRunnable = () -> {
+            // Call your desired function here
+            Log.d(TAG, "Link timeout home");
+            augmentOSLib.sendHomeScreen();
+        };
+        callTimeoutHandler.postDelayed(timeoutRunnable, 16000);
+
+        displayQueue.addTask(new DisplayQueue.Task(() -> augmentOSLib.sendTextWall(notificationString), true, false, false));
+    }
+
+    private synchronized void addNotification(JSONObject notificationData) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String formattedDateTime = LocalDateTime.now().format(formatter);
+
+        PhoneNotification newPhoneNotification = new PhoneNotification(
+                notificationData.optString("title"),
+                notificationData.optString("text"),
+                notificationData.optString("appName"),
+                formattedDateTime,
+                UUID.randomUUID().toString()
+        );
+
+        for (int i = 0; i < notificationQueue.length(); i++) { // Remove element with same title and appName
+            try {
+                PhoneNotification existingPhoneNotification = (PhoneNotification) notificationQueue.get(i);
+                if (existingPhoneNotification.getTitle().equals(newPhoneNotification.getTitle()) &&
+                    existingPhoneNotification.getAppName().equals(newPhoneNotification.getAppName())) {
+                    notificationQueue.remove(i);
+                    break; // Exit loop after removing the duplicate
+                }
+            } catch (JSONException e) {
+                Log.e(TAG, "Error checking existing notifications in queue: " + e.getMessage());
+            }
+        }
+
+        // Remove the least recent notification if the queue exceeds 3
+        if (notificationQueue.length() >= 2) {
+            notificationQueue.remove(0);
+        }
+
+        notificationQueue.put(newPhoneNotification); // Add to the JSONArray
+        Log.d(TAG, "PhoneNotification added to queue: " + notificationData);
+    }
+
+    private String constructNotificationString() {
+        StringBuilder notificationsString = new StringBuilder();
+        for (int i = 0; i < notificationQueue.length(); i++) {
+            try {
+                PhoneNotification notification = (PhoneNotification) notificationQueue.get(i);
+                String notificationString = notification.getAppName() + " - " + notification.getTitle() + ": " +
+                        notification.getText().replace("\n", ". ");
+
+                notificationsString.append(notificationString, 0, Math.min(notificationString.length(), 50))
+                                   .append("\n");
+            } catch (JSONException e) {
+                Log.e(TAG, "Error constructing notification string: " + e.getMessage());
+            }
+        }
+        return notificationsString.toString();
+    }
 }
