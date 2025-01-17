@@ -24,12 +24,18 @@ import java.util.UUID;
 
 public class NotificationService extends SmartGlassesAndroidService {
     public static final String TAG = "NotificationService";
-
     public AugmentOSLib augmentOSLib;
     private final JSONArray notificationQueue;
-
     private DisplayQueue displayQueue;
-    private static final List<String> notificationAppBlackList = Arrays.asList("youtube", "augment");
+    private static final List<String> notificationAppBlackList = Arrays.asList(
+        "youtube",
+        "augment",
+        "maps"
+//        "facebook",
+//        "instagram",
+//        "tiktok",
+//        "snapchat",
+    );
     private final Handler callTimeoutHandler = new Handler(Looper.getMainLooper());
     private Runnable timeoutRunnable;
     public NotificationService() {
