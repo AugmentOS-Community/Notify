@@ -58,7 +58,6 @@ public class NotificationService extends SmartGlassesAndroidService {
         Log.d(TAG, "Show Notifications on Glasses service started");
 
         completeInitialization();
-
     }
 
     protected void setupEventBusSubscribers() {
@@ -152,7 +151,7 @@ public class NotificationService extends SmartGlassesAndroidService {
 
     private String constructNotificationString() {
         StringBuilder notificationsString = new StringBuilder();
-        for (int i = 0; i < notificationQueue.length(); i++) {
+        for (int i = notificationQueue.length() - 1; i >= 0; i--) {
             try {
                 PhoneNotification notification = (PhoneNotification) notificationQueue.get(i);
                 String notificationString = notification.getAppName() + " - " + notification.getTitle() + ": " +
