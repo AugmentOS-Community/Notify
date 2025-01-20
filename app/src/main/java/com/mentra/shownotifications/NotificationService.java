@@ -140,29 +140,41 @@ public class NotificationService extends SmartGlassesAndroidService {
             }
         }
 
-        // Remove the least recent notification if the queue exceeds 3
         if (notificationQueue.length() >= 2) {
             notificationQueue.remove(0);
         }
 
-        notificationQueue.put(newPhoneNotification); // Add to the JSONArray
+        notificationQueue.put(newPhoneNotification);
         Log.d(TAG, "PhoneNotification added to queue: " + notificationData);
     }
 
     private String constructNotificationString() {
         StringBuilder notificationsString = new StringBuilder();
+
         for (int i = notificationQueue.length() - 1; i >= 0; i--) {
             try {
                 PhoneNotification notification = (PhoneNotification) notificationQueue.get(i);
-                String notificationString = notification.getAppName() + " - " + notification.getTitle() + ": " +
-                        notification.getText().replace("\n", ". ");
+                String appName = notification.getAppName();
+                String title = notification.getTitle();
+                String text = notification.getText().replace("\n", ". ");
 
-                notificationsString.append(notificationString, 0, Math.min(notificationString.length(), 50))
-                                   .append("\n");
+                String notificationString;
+                if (title == null || title.isEmpty()) {
+                    notificationString = String.format("%s: %s", appName, text);
+                } else {
+                    notificationString = String.format("%s - %s: %s", appName, title, text);
+                }
+
+                if (notificationString.length() > 50) {
+                    notificationString = notificationString.substring(0, 47) + "...";
+                }
+
+                notificationsString.append(notificationString).append("\n");
             } catch (JSONException e) {
-                Log.e(TAG, "Error constructing notification string: " + e.getMessage());
+                Log.e(TAG, "Error constructing notification string at index " + i + ": " + e.getMessage());
             }
         }
-        return notificationsString.toString();
+
+        return notificationsString.toString().trim();
     }
 }
