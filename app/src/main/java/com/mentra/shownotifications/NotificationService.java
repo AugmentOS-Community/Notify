@@ -27,6 +27,7 @@ public class NotificationService extends SmartGlassesAndroidService {
     public AugmentOSLib augmentOSLib;
     private final JSONArray notificationQueue;
     private DisplayQueue displayQueue;
+    private int maxLengthNotificationString = 44;
     private static final List<String> notificationAppBlackList = Arrays.asList(
         "youtube",
         "augment",
@@ -168,15 +169,18 @@ public class NotificationService extends SmartGlassesAndroidService {
                 String title = notification.getTitle();
                 String text = notification.getText().replace("\n", ". ");
 
+                //make shorter if string is too long
+                if (text.length() > maxLengthNotificationString) {
+                    text = text.substring(
+                            Math.max(0, text.length() - maxLengthNotificationString + 3)
+                    );
+                }
+
                 String notificationString;
                 if (title == null || title.isEmpty()) {
                     notificationString = String.format("%s: %s", appName, text);
                 } else {
                     notificationString = String.format("%s - %s: %s", appName, title, text);
-                }
-
-                if (notificationString.length() > 60) {
-                    notificationString = notificationString.substring(0, 57) + "...";
                 }
 
                 notificationsString.append(notificationString).append("\n");
