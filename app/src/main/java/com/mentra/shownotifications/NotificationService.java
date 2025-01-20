@@ -98,7 +98,13 @@ public class NotificationService extends SmartGlassesAndroidService {
     }
 
     private void addNotificationToQueueAndShowOnGlasses(JSONObject notification) {
-        if(notification == null || notificationAppBlackList.contains(notification.optString("appName").toLowerCase())) return;
+        if (notification == null) return;
+        
+        String appName = notification.optString("appName").toLowerCase();
+        
+        for (String blackListedApp : notificationAppBlackList) {
+            if (appName.contains(blackListedApp)) return;
+        }
 
         addNotification(notification);
         String notificationString = constructNotificationString();
@@ -126,6 +132,10 @@ public class NotificationService extends SmartGlassesAndroidService {
                 formattedDateTime,
                 UUID.randomUUID().toString()
         );
+
+        if (newPhoneNotification.getText().isEmpty()) {
+            return;
+        }
 
         for (int i = 0; i < notificationQueue.length(); i++) { // Remove element with same title and appName
             try {
@@ -165,8 +175,8 @@ public class NotificationService extends SmartGlassesAndroidService {
                     notificationString = String.format("%s - %s: %s", appName, title, text);
                 }
 
-                if (notificationString.length() > 50) {
-                    notificationString = notificationString.substring(0, 47) + "...";
+                if (notificationString.length() > 60) {
+                    notificationString = notificationString.substring(0, 57) + "...";
                 }
 
                 notificationsString.append(notificationString).append("\n");

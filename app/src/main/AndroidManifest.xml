@@ -26,7 +26,7 @@
             </intent-filter>
 
             <!-- Metadata to identify this as an AugmentOS TPA -->
-            <meta-data android:name="com.augmentos.tpa.name" android:value="Show Notifications on Glasses" />
+            <meta-data android:name="com.augmentos.tpa.name" android:value="Notifications" />
             <meta-data android:name="com.augmentos.tpa.description" android:value="Language learning smart glasses." />
         </service>
 
