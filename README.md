@@ -1,3 +1,3 @@
-# Show Notifications on Glasses
+# Phone Notifications on Smart Glasses
 
-Show the notifications you receive on your smart glasses.
+Show the notifications you receive on your phone through your smart glasses.
