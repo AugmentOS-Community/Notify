@@ -27,7 +27,7 @@ public class NotificationService extends SmartGlassesAndroidService {
     public AugmentOSLib augmentOSLib;
     private final JSONArray notificationQueue;
     private DisplayQueue displayQueue;
-    private int maxLengthNotificationString = 44;
+    private int maxLengthNotificationString = 55;
     private static final List<String> notificationAppBlackList = Arrays.asList(
         "youtube",
         "augment",
@@ -169,19 +169,29 @@ public class NotificationService extends SmartGlassesAndroidService {
                 String title = notification.getTitle();
                 String text = notification.getText().replace("\n", ". ");
 
-                //make shorter if string is too long
-                if (text.length() > maxLengthNotificationString) {
-                    text = text.substring(
-                            Math.max(0, text.length() - maxLengthNotificationString + 3)
-                    );
+                // Build a prefix including the app name and title (if available)
+                String prefix;
+                if (title == null || title.isEmpty()) {
+                    prefix = appName + ": ";
+                } else {
+                    prefix = appName + " - " + title + ": ";
                 }
 
-                String notificationString;
-                if (title == null || title.isEmpty()) {
-                    notificationString = String.format("%s: %s", appName, text);
-                } else {
-                    notificationString = String.format("%s - %s: %s", appName, title, text);
+                String combinedString = prefix + text;
+
+                // If the entire combined string is too long, truncate by placing ellipsis after prefix
+                if (combinedString.length() > maxLengthNotificationString) {
+                    int lengthAvailableForText = maxLengthNotificationString - prefix.length() - 4;
+                    if (lengthAvailableForText < 0) {
+                        lengthAvailableForText = 0;
+                    }
+                    if (text.length() > lengthAvailableForText) {
+                        text = text.substring(text.length() - lengthAvailableForText);
+                    }
+                    combinedString = prefix + "... " + text;
                 }
+
+                String notificationString = combinedString;
 
                 notificationsString.append(notificationString).append("\n");
             } catch (JSONException e) {
