@@ -1,5 +1,4 @@
 {
-  "name": "Show Notifications on Glasses",
-  "description": "Show the notifications you receive on your smart glasses.",
-  "version": "1.0.0"
+  "name": "Notifications",
+  "description": "Show the notifications you receive on your smart glasses."
 }
