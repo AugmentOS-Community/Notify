@@ -19,186 +19,111 @@ import org.json.JSONObject;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.UUID;
 
 public class NotificationService extends SmartGlassesAndroidService {
     public static final String TAG = "NotificationService";
-    public AugmentOSLib augmentOSLib;
-    private final JSONArray notificationQueue;
-    private DisplayQueue displayQueue;
-    private int maxLengthNotificationString = 55;
-    private static final List<String> notificationAppBlackList = Arrays.asList(
-        "youtube",
-        "augment",
-        "maps"
-//        "facebook",
-//        "instagram",
-//        "tiktok",
-//        "snapchat",
-    );
+    private AugmentOSLib augmentOSLib;
+    private final Queue<PhoneNotification> notificationQueue = new LinkedList<>();
+    private static final int NOTIFICATION_DISPLAY_DURATION = 5000; // 5 seconds
+    private final List<String> notificationAppBlackList = Arrays.asList("youtube", "augment", "maps");
     private final Handler callTimeoutHandler = new Handler(Looper.getMainLooper());
     private Runnable timeoutRunnable;
+    private boolean isDisplayingNotification = false;
+
     public NotificationService() {
         super();
-        this.notificationQueue = new JSONArray();
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
-
-        // Create AugmentOSLib instance with context: this
         augmentOSLib = new AugmentOSLib(this);
-
-        //setup event bus subscribers
         setupEventBusSubscribers();
-
-        displayQueue = new DisplayQueue();
-
-        Log.d(TAG, "Show Notifications on Glasses service started");
-
-        completeInitialization();
+        Log.d(TAG, "Notification Service Started");
     }
 
-    protected void setupEventBusSubscribers() {
+    @Override
+    public void onDestroy() {
+        Log.d(TAG, "Service Destroyed");
+        augmentOSLib.deinit();
+        EventBus.getDefault().unregister(this);
+        callTimeoutHandler.removeCallbacksAndMessages(null);
+        super.onDestroy();
+    }
+
+    private void setupEventBusSubscribers() {
         EventBus eventBus = EventBus.getDefault();
         if (!eventBus.isRegistered(this)) {
             try {
                 eventBus.register(this);
             } catch (EventBusException e) {
-                Log.w("EventBus", "Subscriber already registered: " + e.getMessage());
+                Log.w(TAG, "EventBus already registered: " + e.getMessage());
             }
         }
-    }
-
-    public void completeInitialization() {
-        Log.d(TAG, "COMPLETE CONVOSCOPE INITIALIZATION");
-
-        displayQueue.startQueue();
-    }
-
-    @Override
-    public void onDestroy() {
-        Log.d(TAG, "onDestroy: Called");
-        Log.d(TAG, "Deinit augmentOSLib");
-        augmentOSLib.deinit();
-        Log.d(TAG, "locationSystem remove");
-        EventBus.getDefault().unregister(this);
-
-        if (displayQueue != null) displayQueue.stopQueue();
-        Log.d(TAG, "ran onDestroy");
-        super.onDestroy();
     }
 
     @Subscribe
-    public void onNotificationEvent(NotificationEvent event) throws JSONException {
-        JSONObject notificationData = event.getNotificationData();
-        Log.d(TAG, "Received event: " + notificationData.toString());
-        addNotificationToQueueAndShowOnGlasses(notificationData);
+    public void onNotificationEvent(NotificationEvent event) {
+        Log.d(TAG, "Received event: " + event + ", " + event.text);
+        PhoneNotification notif = new PhoneNotification(event.title, event.text, event.appName, event.timestamp, event.id);
+        queueNotification(notif);
     }
 
-    private void addNotificationToQueueAndShowOnGlasses(JSONObject notification) {
-        if (notification == null) return;
-        
-        String appName = notification.optString("appName").toLowerCase();
-        
-        for (String blackListedApp : notificationAppBlackList) {
-            if (appName.contains(blackListedApp)) return;
+    private synchronized void queueNotification(PhoneNotification notif) {
+        // Only check blacklist
+        for (String blacklisted : notificationAppBlackList) {
+            if (notif.getAppName().toLowerCase().contains(blacklisted)) return;
         }
 
-        addNotification(notification);
-        String notificationString = constructNotificationString();
+        // Add to the queue
+        notificationQueue.offer(notif);
 
-        callTimeoutHandler.removeCallbacks(timeoutRunnable);
-
-        timeoutRunnable = () -> {
-            // Call your desired function here
-            Log.d(TAG, "Link timeout home");
-            augmentOSLib.sendHomeScreen();
-        };
-        callTimeoutHandler.postDelayed(timeoutRunnable, 16000);
-
-        displayQueue.addTask(new DisplayQueue.Task(() -> augmentOSLib.sendTextWall(notificationString), true, false, false));
+        // Start displaying if not already doing so
+        if (!isDisplayingNotification) {
+            displayNextNotification();
+        }
     }
 
-    private synchronized void addNotification(JSONObject notificationData) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        String formattedDateTime = LocalDateTime.now().format(formatter);
-
-        PhoneNotification newPhoneNotification = new PhoneNotification(
-                notificationData.optString("title"),
-                notificationData.optString("text"),
-                notificationData.optString("appName"),
-                formattedDateTime,
-                UUID.randomUUID().toString()
-        );
-
-        if (newPhoneNotification.getText().isEmpty()) {
+    private void displayNextNotification() {
+        if (notificationQueue.isEmpty()) {
+            isDisplayingNotification = false;
+            augmentOSLib.sendHomeScreen();
             return;
         }
 
-        for (int i = 0; i < notificationQueue.length(); i++) { // Remove element with same title and appName
-            try {
-                PhoneNotification existingPhoneNotification = (PhoneNotification) notificationQueue.get(i);
-                if (existingPhoneNotification.getTitle().equals(newPhoneNotification.getTitle()) &&
-                    existingPhoneNotification.getAppName().equals(newPhoneNotification.getAppName())) {
-                    notificationQueue.remove(i);
-                    break; // Exit loop after removing the duplicate
-                }
-            } catch (JSONException e) {
-                Log.e(TAG, "Error checking existing notifications in queue: " + e.getMessage());
-            }
-        }
+        isDisplayingNotification = true;
+        PhoneNotification notification = notificationQueue.poll();
+        String notificationString = constructNotificationString(notification);
 
-        if (notificationQueue.length() >= 2) {
-            notificationQueue.remove(0);
-        }
+        augmentOSLib.sendTextWall(notificationString);
 
-        notificationQueue.put(newPhoneNotification);
-        Log.d(TAG, "PhoneNotification added to queue: " + notificationData);
+        // Schedule next notification display
+        callTimeoutHandler.removeCallbacks(timeoutRunnable);
+        timeoutRunnable = () -> displayNextNotification();
+        callTimeoutHandler.postDelayed(timeoutRunnable, NOTIFICATION_DISPLAY_DURATION);
     }
 
-    private String constructNotificationString() {
-        StringBuilder notificationsString = new StringBuilder();
+    private String constructNotificationString(PhoneNotification notification) {
+        String appName = notification.getAppName();
+        String title = notification.getTitle();
+        String text = notification.getText().replace("\n", ". ");
+        int maxLength = 500;
 
-        for (int i = notificationQueue.length() - 1; i >= 0; i--) {
-            try {
-                PhoneNotification notification = (PhoneNotification) notificationQueue.get(i);
-                String appName = notification.getAppName();
-                String title = notification.getTitle();
-                String text = notification.getText().replace("\n", ". ");
+        String prefix = (title == null || title.isEmpty()) ? appName + ": " : appName + " - " + title + ": ";
+        String combinedString = prefix + text;
 
-                // Build a prefix including the app name and title (if available)
-                String prefix;
-                if (title == null || title.isEmpty()) {
-                    prefix = appName + ": ";
-                } else {
-                    prefix = appName + " - " + title + ": ";
-                }
-
-                String combinedString = prefix + text;
-
-                // If the entire combined string is too long, truncate by placing ellipsis after prefix
-                if (combinedString.length() > maxLengthNotificationString) {
-                    int lengthAvailableForText = maxLengthNotificationString - prefix.length() - 4;
-                    if (lengthAvailableForText < 0) {
-                        lengthAvailableForText = 0;
-                    }
-                    if (text.length() > lengthAvailableForText) {
-                        text = text.substring(text.length() - lengthAvailableForText);
-                    }
-                    combinedString = prefix + "... " + text;
-                }
-
-                String notificationString = combinedString;
-
-                notificationsString.append(notificationString).append("\n");
-            } catch (JSONException e) {
-                Log.e(TAG, "Error constructing notification string at index " + i + ": " + e.getMessage());
+        if (combinedString.length() > maxLength) {
+            int lengthAvailableForText = maxLength - prefix.length() - 4;
+            if (lengthAvailableForText > 0 && text.length() > lengthAvailableForText) {
+                text = text.substring(0, lengthAvailableForText) + "...";
             }
+            combinedString = prefix + text;
         }
 
-        return notificationsString.toString().trim();
+        return combinedString;
     }
 }
