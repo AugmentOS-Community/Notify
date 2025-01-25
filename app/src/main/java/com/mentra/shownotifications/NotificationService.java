@@ -42,7 +42,7 @@ public class NotificationService extends SmartGlassesAndroidService {
     public void onCreate() {
         super.onCreate();
         augmentOSLib = new AugmentOSLib(this);
-        setupEventBusSubscribers();
+//        setupEventBusSubscribers();
         Log.d(TAG, "Notification Service Started");
     }
 
@@ -50,21 +50,21 @@ public class NotificationService extends SmartGlassesAndroidService {
     public void onDestroy() {
         Log.d(TAG, "Service Destroyed");
         augmentOSLib.deinit();
-        EventBus.getDefault().unregister(this);
+//        EventBus.getDefault().unregister(this);
         callTimeoutHandler.removeCallbacksAndMessages(null);
         super.onDestroy();
     }
 
-    private void setupEventBusSubscribers() {
-        EventBus eventBus = EventBus.getDefault();
-        if (!eventBus.isRegistered(this)) {
-            try {
-                eventBus.register(this);
-            } catch (EventBusException e) {
-                Log.w(TAG, "EventBus already registered: " + e.getMessage());
-            }
-        }
-    }
+//    private void setupEventBusSubscribers() {
+//        EventBus eventBus = EventBus.getDefault();
+//        if (!eventBus.isRegistered(this)) {
+//            try {
+//        eventBus.register(this);
+//            } catch (EventBusException e) {
+//                Log.w(TAG, "EventBus already registered: " + e.getMessage());
+//            }
+//        }
+//    }
 
     @Subscribe
     public void onNotificationEvent(NotificationEvent event) {
