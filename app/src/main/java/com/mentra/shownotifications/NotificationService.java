@@ -69,7 +69,7 @@ public class NotificationService extends SmartGlassesAndroidService {
     @Subscribe
     public void onNotificationEvent(NotificationEvent event) {
         Log.d(TAG, "Received event: " + event + ", " + event.text);
-        PhoneNotification notif = new PhoneNotification(event.title, event.text, event.appName, event.timestamp, event.id);
+        PhoneNotification notif = new PhoneNotification(event.title, event.text, event.appName, event.timestamp, event.uuid);
         queueNotification(notif);
     }
 
