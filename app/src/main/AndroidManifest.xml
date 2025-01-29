@@ -13,7 +13,7 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Notification"
+        android:theme="@style/Theme.Notifications"
         tools:targetApi="31">
 
         <!-- Declare the service that will interact with AugmentOS -->
@@ -34,7 +34,7 @@
         <activity
             android:name=".LauncherActivity"
             android:exported="true"
-            android:theme="@style/Theme.Notification.NoActionBar">
+            android:theme="@style/Theme.Notifications.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
