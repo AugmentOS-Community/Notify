@@ -20,7 +20,7 @@ public class NotificationService extends SmartGlassesAndroidService {
     public static final String TAG = "NotificationService";
     private AugmentOSLib augmentOSLib;
     private final Queue<PhoneNotification> notificationQueue = new LinkedList<>();
-    private static final int NOTIFICATION_DISPLAY_DURATION = 5000; // 5 seconds
+    private static final int NOTIFICATION_DISPLAY_DURATION = 8500; // 5 seconds
     private final List<String> notificationAppBlackList = Arrays.asList("youtube", "augment", "maps");
     private final Handler callTimeoutHandler = new Handler(Looper.getMainLooper());
     private Runnable timeoutRunnable;
@@ -83,7 +83,7 @@ public class NotificationService extends SmartGlassesAndroidService {
     private void displayNextNotification() {
         if (notificationQueue.isEmpty()) {
             isDisplayingNotification = false;
-            augmentOSLib.sendHomeScreen();
+            // augmentOSLib.sendHomeScreen();
             return;
         }
 
