@@ -1,28 +1,20 @@
-package com.mentra.shownotifications;
+package com.augmentos.shownotifications;
 
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
-import com.teamopensmartglasses.augmentoslib.AugmentOSLib;
-import com.teamopensmartglasses.augmentoslib.PhoneNotification;
-import com.teamopensmartglasses.augmentoslib.SmartGlassesAndroidService;
-import com.teamopensmartglasses.augmentoslib.events.NotificationEvent;
+import com.augmentos.augmentoslib.AugmentOSLib;
+import com.augmentos.augmentoslib.PhoneNotification;
+import com.augmentos.augmentoslib.SmartGlassesAndroidService;
+import com.augmentos.augmentoslib.events.NotificationEvent;
 
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.EventBusException;
 import org.greenrobot.eventbus.Subscribe;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-import java.util.UUID;
 
 public class NotificationService extends SmartGlassesAndroidService {
     public static final String TAG = "NotificationService";

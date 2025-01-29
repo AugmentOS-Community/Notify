@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace 'com.mentra.shownotifications'
+    namespace 'com.augmentos.shownotifications'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.mentra.shownotifications"
+        applicationId "com.augmentos.shownotifications"
         minSdk 32
         targetSdk 33
         versionCode 1

@@ -4,7 +4,7 @@
     "type": "APK",
     "kind": "Directory"
   },
-  "applicationId": "com.mentra.shownotifications",
+  "applicationId": "com.augmentos.shownotifications",
   "variantName": "release",
   "elements": [
     {

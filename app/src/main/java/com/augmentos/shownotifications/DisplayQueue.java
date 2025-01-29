@@ -1,4 +1,4 @@
-package com.mentra.shownotifications;
+package com.augmentos.shownotifications;
 
 import android.util.Log;
 
