@@ -14,7 +14,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Notification"
+rootProject.name = "Notify"
 include ':app'
 
 include ':AugmentOSLib'
