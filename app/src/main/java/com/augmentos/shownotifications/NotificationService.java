@@ -31,8 +31,7 @@ public class NotificationService extends SmartGlassesAndroidService {
     }
 
     @Override
-    public void onCreate() {
-        super.onCreate();
+    public void setup() {
         augmentOSLib = new AugmentOSLib(this);
 //        setupEventBusSubscribers();
         Log.d(TAG, "Notification Service Started");
