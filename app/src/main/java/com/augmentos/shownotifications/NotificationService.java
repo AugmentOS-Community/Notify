@@ -31,6 +31,11 @@ public class NotificationService extends SmartGlassesAndroidService {
     }
 
     @Override
+    public void onCreate() {
+        super.onCreate();
+    }
+
+    @Override
     public void setup() {
         augmentOSLib = new AugmentOSLib(this);
 //        setupEventBusSubscribers();
@@ -45,17 +50,6 @@ public class NotificationService extends SmartGlassesAndroidService {
         callTimeoutHandler.removeCallbacksAndMessages(null);
         super.onDestroy();
     }
-
-//    private void setupEventBusSubscribers() {
-//        EventBus eventBus = EventBus.getDefault();
-//        if (!eventBus.isRegistered(this)) {
-//            try {
-//        eventBus.register(this);
-//            } catch (EventBusException e) {
-//                Log.w(TAG, "EventBus already registered: " + e.getMessage());
-//            }
-//        }
-//    }
 
     @Subscribe
     public void onNotificationEvent(NotificationEvent event) {
@@ -94,7 +88,7 @@ public class NotificationService extends SmartGlassesAndroidService {
 
         // Schedule next notification display
         callTimeoutHandler.removeCallbacks(timeoutRunnable);
-        timeoutRunnable = () -> displayNextNotification();
+        timeoutRunnable = this::displayNextNotification;
         callTimeoutHandler.postDelayed(timeoutRunnable, NOTIFICATION_DISPLAY_DURATION);
     }
 
