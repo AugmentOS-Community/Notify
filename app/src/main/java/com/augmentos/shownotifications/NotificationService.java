@@ -96,7 +96,7 @@ public class NotificationService extends SmartGlassesAndroidService {
         String appName = notification.getAppName();
         String title = notification.getTitle();
         String text = notification.getText().replace("\n", ". ");
-        int maxLength = 500;
+        int maxLength = 125;
 
         String prefix = (title == null || title.isEmpty()) ? appName + ": " : appName + " - " + title + ": ";
         String combinedString = prefix + text;
