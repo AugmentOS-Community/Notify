@@ -1,11 +1,13 @@
 services:
-  live-captions:
+  notify:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    container_name: live-captions
+    container_name: notify
+    env_file:
+      - ../.env
     ports:
-      - "8090:80"
+      - "8040:80"
     environment:
       - PORT=80
       - CLOUD_HOST_NAME=cloud

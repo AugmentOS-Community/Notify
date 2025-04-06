@@ -9,6 +9,9 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT) : 80; // Default http
 const PACKAGE_NAME = process.env.PACKAGE_NAME || "com.augmentos.notify";
 const AUGMENTOS_API_KEY = process.env.AUGMENTOS_API_KEY || 'test_key'; // In production, this would be securely stored
 
+console.log(`Starting ${PACKAGE_NAME} server on port ${PORT}...`);
+console.log(`Using API key: ${AUGMENTOS_API_KEY}`);
+
 // Duration (in ms) that each notification is displayed
 const NOTIFICATION_DISPLAY_DURATION = 10000; // 10 seconds
 

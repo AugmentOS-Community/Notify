@@ -1,11 +1,13 @@
 services:
-  live-captions:
+  notify:
     build:
       context: ..
       dockerfile: docker/Dockerfile.dev
-    container_name: live-captions-dev
+    container_name: notify-dev
+    env_file:
+      - ../.env
     ports:
-      - "8080:80"
+      - "8040:80"
     volumes:
       - ../src:/app/src:delegated
       - ../scripts:/app/scripts:delegated
