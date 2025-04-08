@@ -137,3 +137,5 @@ dist
 
 # Docker override for local development
 docker-compose.override.yml
+
+.DS_Store
