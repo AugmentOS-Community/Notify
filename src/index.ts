@@ -177,13 +177,6 @@ class NotifyServer extends TpaServer {
     // Create notification manager for this session
     const notificationManager = new NotificationManager(session, userId);
     this.notificationManagers.set(sessionId, notificationManager);
-    
-    // Welcome message
-    session.layouts.showReferenceCard(
-      "Notify", 
-      "Notification service connected", 
-      { durationMs: 3000 }
-    );
 
     // Subscribe to phone notifications
     session.events.onPhoneNotifications((notification) => {
